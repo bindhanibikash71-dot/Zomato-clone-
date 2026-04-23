@@ -1,21 +1,549 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zomato Bhai Clone</title>
-    <link rel="stylesheet" href="style.css">
+    <title>🍽️ Restaurant Order</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .categories {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            overflow-x: auto;
+            background: white;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 85px;
+            z-index: 99;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .menu-container {
+            padding: 15px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .menu-item.veg {
+            border-left: 4px solid #48c479;
+        }
+
+        .menu-item.non-veg {
+            border-left: 4px solid #e43b4f;
+        }
+
+        .item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .item-desc {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .item-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .add-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #5a67d8;
+            transform: scale(1.05);
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-count {
+            font-weight: bold;
+            font-size: 16px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .cart-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .cart-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .cart-count {
+            background: #e43b4f;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .cart-total {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .view-cart-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+
+        .modal h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .customer-form input,
+        .customer-form textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .place-order-btn {
+            background: #48c479;
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .order-code {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            color: #667eea;
+        }
+
+        .close-btn {
+            background: #e43b4f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            float: right;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header with Search -->
-    <header>
-        <h1>🍔 Zomato Bhai</h1>
-        <input type="text" id="searchBar" placeholder="Search restaurant ya khana...">
-    </header>
 
-    <!-- Cards yahan aayenge -->
-    <div id="root"></div>
+    <div class="header">
+        <h1>🍽️ SHARMA RESTAURANT</h1>
+        <p>Pure Veg • Family Restaurant • Since 1995</p>
+    </div>
 
-    <script src="script.js"></script>
+    <div class="categories" id="categories"></div>
+
+    <div class="menu-container" id="menuContainer"></div>
+
+    <div class="cart-bar" id="cartBar">
+        <div class="cart-info">
+            <span class="cart-count" id="cartCount">0</span>
+            <span class="cart-total" id="cartTotal">₹0</span>
+        </div>
+        <button class="view-cart-btn" onclick="openCart()">🛒 View Cart</button>
+    </div>
+
+    <!-- Cart Modal -->
+    <div class="modal" id="cartModal">
+        <div class="modal-content" id="cartModalContent"></div>
+    </div>
+
+    <script>
+        // 🔥 FIREBASE CONFIG - TERA DATABASE URL YAHAN DAAL
+        const FIREBASE_DB_URL = "https://TERA_PROJECT_NAME-default-rtdb.asia-southeast1.firebasedatabase.app";
+        
+        let cart = [];
+        let menuData = [];
+
+        // Sample Menu (Admin panel se change karega toh live update hoga)
+        const defaultMenu = [
+            { id: 1, name: "Paneer Butter Masala", category: "Main Course", price: 220, veg: true, desc: "Creamy tomato gravy with soft paneer cubes" },
+            { id: 2, name: "Dal Makhani", category: "Main Course", price: 180, veg: true, desc: "Slow cooked black lentils with butter" },
+            { id: 3, name: "Butter Naan", category: "Breads", price: 45, veg: true, desc: "Soft butter naan baked in tandoor" },
+            { id: 4, name: "Veg Biryani", category: "Rice", price: 200, veg: true, desc: "Fragrant basmati rice with vegetables" },
+            { id: 5, name: "Masala Dosa", category: "South Indian", price: 150, veg: true, desc: "Crispy dosa with potato filling" },
+            { id: 6, name: "Manchurian", category: "Chinese", price: 170, veg: true, desc: "Veg balls in tangy sauce" },
+            { id: 7, name: "Gulab Jamun", category: "Desserts", price: 100, veg: true, desc: "Soft milk dumplings in sugar syrup" },
+            { id: 8, name: "Lassi", category: "Beverages", price: 60, veg: true, desc: "Sweet yogurt drink" }
+        ];
+
+        // Load Menu
+        function loadMenu() {
+            fetch(`${FIREBASE_DB_URL}/menu.json`)
+                .then(res => res.json())
+                .then(data => {
+                    menuData = data || defaultMenu;
+                    if (!data) {
+                        // Save default menu to Firebase
+                        fetch(`${FIREBASE_DB_URL}/menu.json`, {
+                            method: 'PUT',
+                            body: JSON.stringify(defaultMenu)
+                        });
+                    }
+                    renderCategories();
+                    renderMenu('All');
+                })
+                .catch(() => {
+                    menuData = defaultMenu;
+                    renderCategories();
+                    renderMenu('All');
+                });
+        }
+
+        function renderCategories() {
+            const categories = [...new Set(menuData.map(item => item.category))];
+            const catContainer = document.getElementById('categories');
+            catContainer.innerHTML = '<button class="category-btn active" onclick="renderMenu(\'All\')">All</button>';
+            categories.forEach(cat => {
+                catContainer.innerHTML += `<button class="category-btn" onclick="renderMenu('${cat}')">${cat}</button>`;
+            });
+        }
+
+        function renderMenu(category) {
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === category) btn.classList.add('active');
+            });
+
+            const filtered = category === 'All' ? menuData : menuData.filter(item => item.category === category);
+            const container = document.getElementById('menuContainer');
+            
+            container.innerHTML = filtered.map(item => {
+                const cartItem = cart.find(c => c.id === item.id);
+                const qty = cartItem ? cartItem.qty : 0;
+                const emoji = item.category === 'Main Course' ? '🍛' :
+                              item.category === 'Breads' ? '🍞' :
+                              item.category === 'Rice' ? '🍚' :
+                              item.category === 'South Indian' ? '🥞' :
+                              item.category === 'Chinese' ? '🥡' :
+                              item.category === 'Desserts' ? '🍰' : '🥤';
+
+                return `
+                    <div class="menu-item ${item.veg ? 'veg' : 'non-veg'}">
+                        <div class="item-image">${emoji}</div>
+                        <div class="item-details">
+                            <div class="item-name">${item.veg ? '🟢 ' : '🔴 '}${item.name}</div>
+                            <div class="item-desc">${item.desc}</div>
+                            <div class="item-price">₹${item.price}</div>
+                        </div>
+                        <div class="quantity-controls">
+                            ${qty > 0 ? `
+                                <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
+                                <span class="qty-count">${qty}</span>
+                            ` : ''}
+                            <button class="add-btn" onclick="updateQty(${item.id}, 1)">
+                                ${qty > 0 ? '+' : 'ADD'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateQty(itemId, change) {
+            const item = menuData.find(i => i.id === itemId);
+            const cartIndex = cart.findIndex(c => c.id === itemId);
+
+            if (cartIndex > -1) {
+                cart[cartIndex].qty += change;
+                if (cart[cartIndex].qty <= 0) cart.splice(cartIndex, 1);
+            } else if (change > 0) {
+                cart.push({ ...item, qty: 1 });
+            }
+            updateCartBar();
+            renderMenu(document.querySelector('.category-btn.active').textContent);
+        }
+
+        function updateCartBar() {
+            const count = cart.reduce((sum, item) => sum + item.qty, 0);
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            document.getElementById('cartCount').textContent = count;
+            document.getElementById('cartTotal').textContent = `₹${total}`;
+            document.getElementById('cartBar').style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        function openCart() {
+            const modal = document.getElementById('cartModal');
+            const content = document.getElementById('cartModalContent');
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            content.innerHTML = `
+                <h2>🛒 Your Order</h2>
+                ${cart.map(item => `
+                    <div class="cart-item">
+                        <span>${item.name} x ${item.qty}</span>
+                        <span>₹${item.price * item.qty}</span>
+                        <button class="qty-btn" onclick="updateQtyFromModal(${item.id}, -1)">-</button>
+                        <button class="qty-btn" onclick="updateQtyFromModal(${item.id}, 1)">+</button>
+                    </div>
+                `).join('')}
+                <h3 style="text-align:right; margin-top:15px;">Total: ₹${total}</h3>
+                
+                <div class="customer-form">
+                    <input type="text" id="custName" placeholder="Your Name*" required>
+                    <input type="tel" id="custPhone" placeholder="Phone Number*" required>
+                    <textarea id="custAddress" placeholder="Delivery Address*" rows="3" required></textarea>
+                    <textarea id="custNotes" placeholder="Special Instructions (Optional)" rows="2"></textarea>
+                </div>
+                
+                <button class="place-order-btn" onclick="placeOrder()">✅ Place Order</button>
+                <button class="close-btn" onclick="closeCart()">✕ Close</button>
+            `;
+            modal.style.display = 'block';
+        }
+
+        function updateQtyFromModal(itemId, change) {
+            updateQty(itemId, change);
+            openCart(); // Refresh modal
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
+
+        function generateOrderCode() {
+            const prefix = 'ORD';
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+            return `${prefix}-${timestamp}${random}`;
+        }
+
+        function placeOrder() {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const notes = document.getElementById('custNotes').value.trim();
+
+            if (!name || !phone || !address) {
+                alert('Please fill all required fields!');
+                return;
+            }
+
+            const orderCode = generateOrderCode();
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            const order = {
+                code: orderCode,
+                customer: { name, phone, address, notes },
+                items: cart,
+                total: total,
+                status: 'pending',
+                timestamp: new Date().toISOString(),
+                time: new Date().toLocaleString('en-IN')
+            };
+
+            // Save to Firebase
+            fetch(`${FIREBASE_DB_URL}/orders/${orderCode}.json`, {
+                method: 'PUT',
+                body: JSON.stringify(order)
+            })
+            .then(() => {
+                document.getElementById('cartModalContent').innerHTML = `
+                    <h2 style="color:#48c479;">✅ Order Placed!</h2>
+                    <p style="text-align:center;">Your order code is:</p>
+                    <div class="order-code">${orderCode}</div>
+                    <p style="text-align:center; font-size:14px; color:#666;">
+                        Save this code to track your order!<br>
+                        We'll call you at ${phone} for confirmation.
+                    </p>
+                    <button class="close-btn" onclick="closeCart()">Done</button>
+                `;
+                cart = [];
+                updateCartBar();
+            })
+            .catch(err => {
+                alert('Error placing order. Please try again.');
+                console.error(err);
+            });
+        }
+
+        // Init
+        loadMenu();
+        updateCartBar();
+    </script>
 </body>
 </html>
