@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .header {
+            background: #16213e;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #0f3460;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: #16213e;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tab-btn.active {
+            background: #e94560;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .menu-form {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .menu-form input,
+        .menu-form select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn-primary { background: #e94560; color: white; }
+        .btn-success { background: #48c479; color: white; }
+        .btn-danger { background: #e94560; color: white; }
+
+        .order-card {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #e94560;
+        }
+
+        .order-card.completed {
+            border-left-color: #48c479;
+            opacity: 0.7;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .order-code {
+            font-weight: bold;
+            font-size: 18px;
+            color: #e94560;
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending { background: #ffa500; color: #000; }
+        .status-completed { background: #48c479; color: white; }
+
+        .order-details {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .menu-item-admin {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #1a1a2e;
+            margin-bottom: 8px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🔐 Admin Panel</h1>
+        <p>Manage Menu & Orders</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('orders')">📋 Orders</button>
+        <button class="tab-btn" onclick="showTab('menu')">🍽️ Menu</button>
+    </div>
+
+    <div class="content" id="tabContent"></div>
+
+    <script>
+        // 🔥 YAHAN APNI FIREBASE URL DAAL
+        const FIREBASE_DB_URL = "https://TERA_PROJECT_NAME-default-rtdb.asia-southeast1.firebasedatabase.app";
+        
+        let currentTab = 'orders';
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'orders') loadOrders();
+            else loadMenuAdmin();
+        }
+
+        function loadOrders() {
+            fetch(`${FIREBASE_DB_URL}/orders.json`)
+                .then(res => res.json())
+                .then(data => {
+                    const orders = data ? Object.values(data).reverse() : [];
+                    const content = document.getElementById('tabContent');
+                    
+                    if (orders.length === 0) {
+                        content.innerHTML = '<p style="text-align:center; padding:40px;">No orders yet</p>';
+                        return;
+                    }
+
+                    content.innerHTML = orders.map(order => `
+                        <div class="order-card ${order.status === 'completed' ? 'completed' : ''}">
+                            <div class="order-header">
+                                <span class="order-code">#${order.code}</span>
+                                <span class="order-status ${order.status === 'completed' ? 'status-completed' : 'status-pending'}">
+                                    ${order.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="order-details">
+                                <p><strong>Customer:</strong> ${order.customer.name} | 📞 ${order.customer.phone}</p>
+                                <p><strong>Address:</strong> ${order.customer.address}</p>
+                                <p><strong>Order:</strong> ${order.items.map(i => `${i.name}x${i.qty}`).join(', ')}</p>
+                                <p><strong>Total:</strong> ₹${order.total}</p>
+                                <p><strong>Time:</strong> ${order.time}</p>
+                                ${order.customer.notes ? `<p><strong>Notes:</strong> ${order.customer.notes}</p>` : ''}
+                            </div>
+                            ${order.status !== 'completed' ? `
+                                <button class="btn btn-success" onclick="completeOrder('${order.code}')">
+                                    ✅ Mark as Completed
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-danger" onclick="deleteOrder('${order.code}')">🗑️ Delete</button>
+                        </div>
+                    `).join('');
+                });
+        }
+
+        function completeOrder(code) {
+            fetch(`${FIREBASE_DB_URL}/orders/${code}/status.json`, {
+                method: 'PUT',
+                body: JSON.stringify('completed')
+            }).then(() => loadOrders());
+        }
+
+        function deleteOrder(code) {
+            if (confirm('Delete this order?')) {
+                fetch(`${FIREBASE_DB_URL}/orders/${code}.json`, { method: 'DELETE' })
+                    .then(() => loadOrders());
+            }
+        }
+
+        function loadMenuAdmin() {
+            fetch(`${FIREBASE_DB_URL}/menu.json`)
+                .then(res => res.json())
+                .then(menu => {
+                    const content = document.getElementById('tabContent');
+                    const items = menu || [];
+                    
+                    content.innerHTML = `
+                        <div class="menu-form">
+                            <h3>Add New Item</h3>
+                            <input type="text" id="newName" placeholder="Item Name">
+                            <input type="text" id="newDesc" placeholder="Description">
+                            <select id="newCategory">
+                                <option>Main Course</option>
+                                <option>Breads</option>
+                                <option>Rice</option>
+                                <option>South Indian</option>
+                                <option>Chinese</option>
+                                <option>Desserts</option>
+                                <option>Beverages</option>
+                            </select>
+                            <input type="number" id="newPrice" placeholder="Price (₹)">
+                            <select id="newVeg">
+                                <option value="true">Veg</option>
+                                <option value="false">Non-Veg</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="addMenuItem()">➕ Add Item</button>
+                        </div>
+                        
+                        <h3>Current Menu (${items.length} items)</h3>
+                        ${items.map(item => `
+                            <div class="menu-item-admin">
+                                <span>${item.veg ? '🟢' : '🔴'} ${item.name} - ₹${item.price}</span>
+                                <button class="btn btn-danger" onclick="deleteMenuItem(${item.id})">🗑️</button>
+                            </div>
+                        `).join('')}
+                    `;
+                });
+        }
+
+        function addMenuItem() {
+            const name = document.getElementById('newName').value.trim();
+            const desc = document.getElementById('newDesc').value.trim();
+            const category = document.getElementById('newCategory').value;
+            const price = parseInt(document.getElementById('newPrice').value);
+            const veg = document.getElementById('newVeg').value === 'true';
+
+            if (!name || !price) {
+                alert('Name and price are required!');
+                return;
+            }
+
+            fetch(`${FIREBASE_DB_URL}/menu.json`)
+                .then(res => res.json())
+                .then(menu => {
+                    const items = menu || [];
+                    const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+                    items.push({ id: newId, name, desc, category, price, veg });
+                    
+                    return fetch(`${FIREBASE_DB_URL}/menu.json`, {
+                        method: 'PUT',
+                        body: JSON.stringify(items)
+                    });
+                })
+                .then(() => {
+                    alert('Item added!');
+                    loadMenuAdmin();
+                });
+        }
+
+        function deleteMenuItem(id) {
+            if (confirm('Delete this item?')) {
+                fetch(`${FIREBASE_DB_URL}/menu.json`)
+                    .then(res => res.json())
+                    .then(menu => {
+                        const updated = menu.filter(item => item.id !== id);
+                        return fetch(`${FIREBASE_DB_URL}/menu.json`, {
+                            method: 'PUT',
+                            body: JSON.stringify(updated)
+                        });
+                    })
+                    .then(() => loadMenuAdmin());
+            }
+        }
+
+        // Initial load
+        loadOrders();
+    </script>
+</body>
+</html>
